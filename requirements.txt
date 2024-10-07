@@ -8,3 +8,4 @@ torch==2.4.1
 torchvision==0.19.1
 ipykernel==6.29.5
 tqdm==4.66.5
+seaborn==0.13.2

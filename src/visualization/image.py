@@ -6,7 +6,7 @@ import torch
 
 def sample_image_dataset(
     dataset: VisionDataset,
-    labels_map: dict[int, str] = {},
+    labels: list[str],
     mean=0,
     std=1,
     cols: int = 3,
@@ -19,7 +19,7 @@ def sample_image_dataset(
         img, label = dataset[sample_idx]
         un_normalized_img = img * std + mean
         figure.add_subplot(rows, cols, i)
-        plt.title(labels_map[label] if label in labels_map else label)
+        plt.title(labels[label] if label < len(labels) else label)
         plt.axis("off")
         plt.imshow(np.transpose(un_normalized_img, (1, 2, 0)))
 

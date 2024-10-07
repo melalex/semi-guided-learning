@@ -10,8 +10,10 @@ class OxfordPet(ClassifierModule):
     def __init__(self, device):
         super(OxfordPet, self).__init__()
         self.device = device
+        self.num_classes = 37
+        
         self.net = vgg16(weights=VGG16_Weights.DEFAULT).to(device)
-        self.out_layer = nn.Linear(1000, 37)
+        self.out_layer = nn.Linear(1000, self.num_classes)
 
         for p in self.net.parameters():
             p.requires_grad = False
