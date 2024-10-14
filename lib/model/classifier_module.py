@@ -1,6 +1,7 @@
 import copy
 import math
 from pathlib import Path
+from typing import Optional
 import numpy as np
 import torch
 
@@ -8,6 +9,7 @@ from dataclasses import dataclass
 from torch import Tensor, nn
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
+from torch.optim.lr_scheduler import LRScheduler
 
 from lib.util.progress_bar import NOTEBOOK_PROGRESS_BAR, ProgressBarProvider
 
@@ -29,7 +31,9 @@ class ClassifierModule(nn.Module):
         valid_loader: DataLoader,
         loss_fun: nn.Module,
         optimizer: Optimizer,
-        initial_patience: int = -1,
+        lr_scheduler: Optional[LRScheduler] = None,
+        initial_patience: Optional[int] = None,
+        gradient_clip: Optional[float] = None,
         progress_bar: ProgressBarProvider = NOTEBOOK_PROGRESS_BAR,
     ) -> TrainFeedback:
         num_batches = len(train_loader)
@@ -66,6 +70,10 @@ class ClassifierModule(nn.Module):
 
                     optimizer.zero_grad()
                     loss.backward()
+
+                    if gradient_clip != None:
+                        nn.utils.clip_grad_norm_(self.parameters(), gradient_clip)
+
                     optimizer.step()
 
                     p_bar.update()
@@ -82,22 +90,28 @@ class ClassifierModule(nn.Module):
                 valid_accuracy_history.append(valid_accuracy)
                 valid_loss_history.append(valid_loss)
 
+                progress_postfix = {
+                    "loss": train_avg_loss,
+                    "accuracy": train_avg_accuracy,
+                    "valid_loss": valid_loss,
+                    "valid_accuracy": valid_accuracy,
+                }
+
+                if lr_scheduler != None:
+                    lr_scheduler.step(valid_loss)
+                    progress_postfix["lr"] = lr_scheduler.get_last_lr()
+
                 # Early stopping
-                if patience != -1:
+                if patience != None:
                     if valid_accuracy > best_accuracy:
                         best_accuracy = valid_accuracy
                         best_model_weights = copy.deepcopy(self.state_dict())
                         patience = initial_patience
                     else:
                         patience -= 1
+                    progress_postfix["patience"] = patience
 
-                p_bar.set_postfix(
-                    loss=train_avg_loss,
-                    accuracy=train_avg_accuracy,
-                    valid_loss=valid_loss,
-                    valid_accuracy=valid_accuracy,
-                    patience=patience,
-                )
+                p_bar.set_postfix(**progress_postfix)
 
                 if patience == 0:
                     break
