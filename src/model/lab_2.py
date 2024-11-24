@@ -46,7 +46,6 @@ class Lab2Student(ClassifierModule):
             device
         )
         self.net.avgpool = nn.Identity().to(device)
-        self.out_layer = nn.Linear(1000, self.num_classes).to(device)
 
         for p in self.net.parameters():
             p.requires_grad = False

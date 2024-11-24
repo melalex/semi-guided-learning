@@ -1,5 +1,4 @@
 import copy
-import math
 from pathlib import Path
 from typing import Optional
 import numpy as np
@@ -59,7 +58,7 @@ class ClassifierModule(nn.Module):
                     outputs = self(x)
 
                     accuracy = self.__calculate_accuracy(
-                        self.__extract_prediction(outputs.data), y_true
+                        self.__extract_prediction(outputs), y_true
                     )
 
                     train_total_accuracy += accuracy
@@ -162,7 +161,7 @@ class ClassifierModule(nn.Module):
 
         def forward_batch(img: Tensor) -> Tensor:
             outputs = self(img.to(self.device))
-            return self.__extract_prediction(outputs.data).cpu()
+            return self.__extract_prediction(outputs).cpu()
 
         return torch.cat([forward_batch(images) for images, _ in loader])
 
